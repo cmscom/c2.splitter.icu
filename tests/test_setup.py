@@ -9,6 +9,8 @@ from Products.CMFPlone.UnicodeSplitter.splitter import I18NNormalizer
 from Products.CMFPlone.UnicodeSplitter.splitter import Splitter
 from zope.component import getUtility
 
+from types import SimpleNamespace
+
 import logging
 import pytest
 
@@ -118,6 +120,23 @@ class TestEvaluation:
             setup_tool.runAllImportStepsFromProfile(EVALUATION_UNINSTALL)
         assert "SearchableText_icu" not in catalog.indexes()
         assert "icu_lexicon" in catalog.objectIds()
+
+    def test_uninstall_keeps_a_lexicon_that_another_index_uses(
+        self, catalog, setup_tool, caplog
+    ):
+        extra = SimpleNamespace(
+            doc_attr="SearchableText",
+            lexicon_id="icu_lexicon",
+            index_type="Okapi BM25 Rank",
+        )
+        catalog.addIndex("adopted", "ZCTextIndex", extra)
+        with caplog.at_level(logging.WARNING, logger=PACKAGE_NAME):
+            setup_tool.runAllImportStepsFromProfile(EVALUATION_UNINSTALL)
+        assert "SearchableText_icu" not in catalog.indexes()
+        assert "icu_lexicon" in catalog.objectIds()
+        assert [r.getMessage() for r in caplog.records] == [
+            "icu_lexicon is kept: it is used by adopted"
+        ]
 
     def test_install_again_after_uninstall(self, catalog, setup_tool):
         setup_tool.runAllImportStepsFromProfile(EVALUATION_UNINSTALL)

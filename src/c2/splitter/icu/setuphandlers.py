@@ -64,12 +64,22 @@ def remove_evaluation_index(context):
     """Remove SearchableText_icu, then icu_lexicon.
 
     The index goes first, so that a failure never leaves an index without
-    its lexicon.
+    its lexicon. The lexicon stays while another index uses it, for example
+    after SearchableText was switched to it.
     """
     catalog = getToolByName(context, "portal_catalog")
     if INDEX_ID in catalog.indexes():
         catalog.delIndex(INDEX_ID)
         logger.info("%s removed from portal_catalog", INDEX_ID)
-    if LEXICON_ID in catalog.objectIds():
-        catalog.manage_delObjects([LEXICON_ID])
-        logger.info("%s removed from portal_catalog", LEXICON_ID)
+    if LEXICON_ID not in catalog.objectIds():
+        return
+    users = [
+        index.getId()
+        for index in catalog.Indexes.objectValues()
+        if getattr(index, "lexicon_id", None) == LEXICON_ID
+    ]
+    if users:
+        logger.warning("%s is kept: it is used by %s", LEXICON_ID, ", ".join(users))
+        return
+    catalog.manage_delObjects([LEXICON_ID])
+    logger.info("%s removed from portal_catalog", LEXICON_ID)
