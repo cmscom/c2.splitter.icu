@@ -67,7 +67,7 @@ EXPECTED_GLOBS = {
         "74": ["東京*"],
         "76": ["東京*"],
     },
-    # the wildcard stays on the last word only
+    # a pattern that ICU splits keeps the wildcard on the word it is in
     "東京都庁*": {
         "74": ["東京", "都庁*"],
         "76": ["東京", "都庁*"],
@@ -75,6 +75,10 @@ EXPECTED_GLOBS = {
     "東京都*": {
         "74": ["東京", "都*"],
         "76": ["東京", "都*"],
+    },
+    "東京*都庁*": {
+        "74": ["東京*", "都庁*"],
+        "76": ["東京*", "都庁*"],
     },
 }
 
@@ -190,7 +194,7 @@ def test_invalid_utf8_keeps_the_replacement_inside_a_glob(splitter, caplog):
 
 
 def test_log_does_not_contain_the_text(splitter, caplog):
-    with caplog.at_level(logging.DEBUG):
+    with caplog.at_level(logging.DEBUG, logger="c2.splitter.icu"):
         splitter.process([b"password=hunter2 \xff"])
     assert len(caplog.records) == 1
     assert "hunter2" not in caplog.text
@@ -209,7 +213,16 @@ def test_log_does_not_contain_the_text(splitter, caplog):
         ("ｔｅ？ｔ", ["te?t"]),
         ("foo Python* bar", ["foo", "Python*", "bar"]),
         ("a*b*", ["a*b*"]),
+        ("te?*", ["te?*"]),
         ("Hello, wor*!", ["Hello", "wor*"]),
+        # ICU keeps ".", ",", "'" and ":" inside a word, and so does the
+        # pattern, so that it matches the word in the index
+        ("Python3.14*", ["Python3.14*"]),
+        ("10,000*", ["10,000*"]),
+        ("example.com*", ["example.com*"]),
+        ("don't*", ["don't*"]),
+        ("ver1.2.3*", ["ver1.2.3*"]),
+        ("foo_bar*", ["foo_bar*"]),
         # wildcards apart from words are dropped
         ("Python *", ["Python"]),
         # without wildcards processGlob is process

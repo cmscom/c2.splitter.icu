@@ -21,6 +21,8 @@ DOCUMENTS = {
     "kyoto": "京都の寺",
     "karte": "電子カルテの導入",
     "python": "Python3.14 test notes",
+    "price": "10,000 yen",
+    "domain": "example.com guide",
 }
 
 
@@ -61,8 +63,13 @@ def test_munge_search_term_adds_a_wildcard():
         ("京都", {"tocho", "tokyo", "kyoto"}, {"kyoto"}),
         # and so are wanted matches inside longer words
         ("東京都", {"tocho", "tokyo"}, {"tokyo"}),
+        # words with "." or "," are one word in the text and in the query
+        ("Python3.14", {"python"}, {"python"}),
+        ("10,000", {"price"}, {"price"}),
+        ("example.com", {"domain"}, {"domain"}),
         ("14", {"python"}, set()),
-        # neither finds it: the bigram index has "python3" and "14"
+        # neither finds it: the bigram index has "python3" and "14", the ICU
+        # index has the one word "python3.14"
         ("3.14", set(), set()),
     ],
 )

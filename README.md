@@ -87,7 +87,9 @@ A term that ICU splits into several words, such as `東京都庁*`, becomes
 `東京` `都庁*`. ZCTextIndex searches several words as a phrase and does
 not use the `*` there, so `東京都庁` finds the words `東京` `都庁` next to
 each other, as the bigram splitter does. A single word keeps its
-wildcards (`Python*`, `te?t`). Quotes, `AND`, `OR` and `NOT` are handled
+wildcards (`Python*`, `te?t`). A search term is split like the text, so a
+word with `.`, `,`, `'` or `:` inside, such as `Python3.14`, `10,000` or
+`example.com`, stays one word and `Python3.14*` finds it. Quotes, `AND`, `OR` and `NOT` are handled
 by ZCTextIndex's query parser.
 
 ### Using the splitter in a lexicon

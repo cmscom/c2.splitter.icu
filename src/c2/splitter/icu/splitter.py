@@ -70,45 +70,16 @@ def split_words(text, locale):
     return [segment for segment, is_word in _segments(text, locale) if is_word]
 
 
-def _is_pattern_char(char):
-    """Letters, marks, digits, ``_`` and wildcards make a glob pattern."""
-    return char in WILDCARDS or char == "_" or unicodedata.category(char)[0] in "LMN"
-
-
-def _runs(text):
-    """Split ``text`` into ``(run, has_wildcard)`` parts.
-
-    A run of pattern characters that contains a wildcard is a glob pattern;
-    everything else is plain text.
-    """
-    parts = []
-    plain = []
-    index = 0
-    while index < len(text):
-        end = index
-        while end < len(text) and _is_pattern_char(text[end]):
-            end += 1
-        run = text[index:end]
-        if any(char in WILDCARDS for char in run):
-            parts.append(("".join(plain), False))
-            plain = []
-            parts.append((run, True))
-        else:
-            plain.append(run)
-        if end < len(text):
-            plain.append(text[end])
-        index = end + 1
-    parts.append(("".join(plain), False))
-    return [(run, has_wildcard) for run, has_wildcard in parts if run]
-
-
 def split_glob(pattern, locale):
-    """Split a glob pattern and keep its wildcards on the last word only.
+    """Split a search term and keep each wildcard on the word it belongs to.
 
-    ``東京都庁*`` gives ``東京`` and ``都庁*``, like the bigrams of the
-    UnicodeSplitter. Several words become a phrase, which does not match
-    patterns, so the wildcards of the other words are dropped. A wildcard
-    between two words belongs to the word before it.
+    The wildcards are taken out, the rest is split like the text, and each
+    wildcard goes back to the word it stands in, at the end of the word
+    before it, or at the start of the word after it when no word ends
+    there. Wildcards apart from words are dropped. So the words are the
+    same as in the index: ``Python3.14*`` stays one word, ``東京都庁*``
+    gives ``東京`` and ``都庁*``. ZCTextIndex searches several words as a
+    phrase and removes their wildcards with ``process_post_glob``.
     """
     letters = ""
     wildcards = {}  # offset in ``letters`` -> the wildcards that stand there
@@ -118,22 +89,22 @@ def split_glob(pattern, locale):
         else:
             letters += char
 
-    words = []  # (word, offset in ``letters``)
+    result = []
     offset = 0
+    previous_end = None
     for segment, is_word in _segments(letters, locale):
-        if is_word:
-            words.append((segment, offset))
+        start = offset
         offset += len(segment)
-    if not words:
-        return []
-
-    last, start = words[-1]
-    previous_end = words[-2][1] + len(words[-2][0]) if len(words) > 1 else None
-    first = wildcards.get(start, "") if start != previous_end else ""
-    rest = [wildcards.get(start + i, "") + char for i, char in enumerate(last) if i]
-    end = wildcards.get(start + len(last), "")
-    pattern_word = first + last[0] + "".join(rest) + end
-    return [word for word, _ in words[:-1]] + [pattern_word]
+        if not is_word:
+            continue
+        word = wildcards.get(start, "") if start != previous_end else ""
+        word += segment[0]
+        for index, char in enumerate(segment[1:], start + 1):
+            word += wildcards.get(index, "") + char
+        word += wildcards.get(offset, "")
+        result.append(word)
+        previous_end = offset
+    return result
 
 
 @implementer(ISplitter)
@@ -155,15 +126,11 @@ class ICUSplitter:
         return result
 
     def processGlob(self, lst):
-        """Split search terms; ``*`` and ``?`` stay on the last word."""
+        """Split search terms; ``*`` and ``?`` stay on their words."""
         result = []
         for value in lst:
             text = unicodedata.normalize("NFKC", to_str(value))
-            for run, has_wildcard in _runs(text):
-                if has_wildcard:
-                    result.extend(split_glob(run, self.locale))
-                else:
-                    result.extend(split_words(run, self.locale))
+            result.extend(split_glob(text, self.locale))
         return result
 
     def process_post_glob(self, lst):
