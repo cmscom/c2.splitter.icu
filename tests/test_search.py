@@ -7,6 +7,8 @@ from plone.app.testing import TEST_USER_ID
 from Products.CMFCore.indexing import processQueue
 from Products.ZCTextIndex.ParseTree import QueryError
 
+from types import SimpleNamespace
+
 import pytest
 import transaction
 
@@ -110,3 +112,48 @@ def test_icu_lexicon_survives_a_commit(functional):
         assert lexicon.termToWordIds("電子") != [0]
     finally:
         connection.close()
+
+
+# The steps of the README, as code.
+
+
+def test_reindex_after_applying_the_profile(portal, setup_tool):
+    add_documents(portal)
+    setup_tool.runAllImportStepsFromProfile(EVALUATION)
+    catalog = portal.portal_catalog
+    assert len(catalog(SearchableText_icu="京都*")) == 0
+
+    catalog.reindexIndex("SearchableText_icu", None)
+
+    assert {b.getId for b in catalog(SearchableText_icu="京都*")} == {"kyoto"}
+
+
+def replace_searchable_text(catalog, lexicon_id):
+    """The code of the README: SearchableText with another lexicon."""
+    catalog.delIndex("SearchableText")
+    extra = SimpleNamespace(
+        doc_attr="SearchableText",
+        lexicon_id=lexicon_id,
+        index_type="Okapi BM25 Rank",
+    )
+    catalog.addIndex("SearchableText", "ZCTextIndex", extra)
+    catalog.reindexIndex("SearchableText", None)
+
+
+def test_adopt_and_roll_back(search, portal, setup_tool):
+    catalog = portal.portal_catalog
+    munged = munge_search_term("京都")
+    assert search("SearchableText", munged) == {"tocho", "tokyo", "kyoto"}
+
+    replace_searchable_text(catalog, "icu_lexicon")
+    assert search("SearchableText", munged) == {"kyoto"}
+    # Removing the evaluation index keeps the lexicon SearchableText uses.
+    setup_tool.runAllImportStepsFromProfile(
+        "profile-c2.splitter.icu:evaluation-uninstall"
+    )
+    # (the index caches its lexicon, so searching alone would not show it)
+    assert "icu_lexicon" in catalog.objectIds()
+    assert search("SearchableText", munged) == {"kyoto"}
+
+    replace_searchable_text(catalog, "plone_lexicon")
+    assert search("SearchableText", munged) == {"tocho", "tokyo", "kyoto"}
