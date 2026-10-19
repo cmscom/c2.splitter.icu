@@ -4,6 +4,8 @@
     i18n_domain="c2.splitter.icu"
     >
 
+  <include package=".browser" />
+
   <!-- Importing the package registers the splitter; the profile only marks
        the add-on as installed and does not change the catalog. -->
   <genericsetup:registerProfile

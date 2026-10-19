@@ -1,0 +1,14 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    >
+
+  <browser:page
+      name="icu-compare"
+      for="plone.base.interfaces.siteroot.IPloneSiteRoot"
+      class=".compare.CompareView"
+      template="templates/compare.pt"
+      permission="cmf.ManagePortal"
+      />
+
+</configure>
