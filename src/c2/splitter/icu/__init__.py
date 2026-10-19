@@ -1,5 +1,8 @@
 """A word splitter for Plone's ZCTextIndex based on ICU word boundaries."""
 
+# Importing splitter registers the ICU word splitter with ZCTextIndex.
+from c2.splitter.icu import splitter  # noqa: F401
+
 import logging
 
 

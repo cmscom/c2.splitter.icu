@@ -8,8 +8,6 @@ word break rules of [ICU](https://icu.unicode.org/), through
 [PyICU](https://pypi.org/project/PyICU/), so that a search does not match
 character pairs inside unrelated words.
 
-This package is in development; it does not register a splitter yet.
-
 ## Supported versions
 
 - Plone 6.0, 6.1 and 6.2
