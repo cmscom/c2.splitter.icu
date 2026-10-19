@@ -47,7 +47,8 @@ pip install c2.splitter.icu
 Restart Zope and activate **c2.splitter.icu** in the add-ons control panel
 (or apply the `c2.splitter.icu:default` profile). The package registers a
 ZCTextIndex word splitter named **ICU word splitter** when it is imported;
-activating it does not change the catalog.
+activating it does not change the catalog, and neither does deactivating
+it.
 
 ## How text is split
 
@@ -138,7 +139,10 @@ to `SearchableText` and changes nothing else:
 To remove the evaluation index, apply the
 `c2.splitter.icu:evaluation-uninstall` profile in `portal_setup`. It
 removes `SearchableText_icu`, then `icu_lexicon`; the lexicon is kept
-(with a warning in the log) while another index uses it.
+(with a warning in the log) while another index uses it. Deactivating the
+add-on does not remove them. Remove them, or switch `SearchableText` back,
+before you remove the package: the lexicon stores the splitter, and loading
+it needs this package.
 
 ## Switching SearchableText to ICU
 

@@ -30,8 +30,11 @@ PIPELINE = (
 @implementer(INonInstallable)
 class HiddenProfiles:
     def getNonInstallableProfiles(self):
-        """Hide the uninstall profile from site creation and the add-ons list."""
-        return ["c2.splitter.icu:evaluation-uninstall"]
+        """Hide the uninstall profiles from site creation and the add-ons list."""
+        return [
+            "c2.splitter.icu:uninstall",
+            "c2.splitter.icu:evaluation-uninstall",
+        ]
 
 
 def add_evaluation_index(context):

@@ -47,11 +47,24 @@ def test_default_profile_does_not_change_the_catalog(catalog):
 
 
 @pytest.mark.usefixtures("portal")
-def test_evaluation_uninstall_profile_is_hidden():
+def test_uninstall_profiles_are_hidden():
     hidden = getUtility(INonInstallable, name=PACKAGE_NAME)
     assert hidden.getNonInstallableProfiles() == [
-        "c2.splitter.icu:evaluation-uninstall"
+        "c2.splitter.icu:uninstall",
+        "c2.splitter.icu:evaluation-uninstall",
     ]
+
+
+def test_deactivate(installer):
+    assert installer.uninstall_product(PACKAGE_NAME) is True
+    assert installer.is_product_installed(PACKAGE_NAME) is False
+
+
+@pytest.mark.usefixtures("evaluation")
+def test_deactivate_keeps_the_evaluation_index(installer, catalog):
+    installer.uninstall_product(PACKAGE_NAME)
+    assert "icu_lexicon" in catalog.objectIds()
+    assert "SearchableText_icu" in catalog.indexes()
 
 
 @pytest.mark.usefixtures("evaluation")

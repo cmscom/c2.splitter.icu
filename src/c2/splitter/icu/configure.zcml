@@ -16,6 +16,16 @@
       directory="profiles/default"
       />
 
+  <!-- Deactivating changes nothing either: remove the evaluation index with
+       the evaluation-uninstall profile. -->
+  <genericsetup:registerProfile
+      name="uninstall"
+      title="c2.splitter.icu: Uninstall"
+      description="Mark the add-on as not installed. The catalog is not changed."
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      directory="profiles/uninstall"
+      />
+
   <genericsetup:registerProfile
       name="evaluation"
       title="c2.splitter.icu: Evaluation index"
@@ -34,7 +44,7 @@
       post_handler=".setuphandlers.remove_evaluation_index"
       />
 
-  <!-- Hide the uninstall profile -->
+  <!-- Hide the uninstall profiles -->
   <utility
       factory=".setuphandlers.HiddenProfiles"
       name="c2.splitter.icu"
