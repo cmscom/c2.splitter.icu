@@ -101,6 +101,15 @@ class TestCompare:
         assert "東京都庁の案内" in html
         assert "only here" in html
 
+    def test_query_given_twice_uses_the_first(self, compare):
+        # ?q=京都&q=東京 gives a list
+        view = compare(["京都", "東京"])
+        assert view.query == "京都"
+        assert "<code>京都*</code>" in view()
+
+    def test_empty_query_list(self, compare):
+        assert compare([]).query == ""
+
     def test_page_without_query(self, compare):
         view = compare()
         assert view.query == ""

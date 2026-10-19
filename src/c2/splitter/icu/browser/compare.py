@@ -25,7 +25,11 @@ class CompareView(BrowserView):
 
     @property
     def query(self):
-        return safe_text(self.request.form.get("q", "")).strip()
+        query = self.request.form.get("q", "")
+        if isinstance(query, list):
+            # ?q=a&q=b
+            query = query[0] if query else ""
+        return safe_text(query).strip()
 
     @property
     def munged(self):
