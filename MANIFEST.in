@@ -1,0 +1,8 @@
+graft src/c2
+include *.md
+include pyproject.toml
+exclude tox.ini
+exclude *.txt
+global-exclude *.pyc
+include LICENSE.GPL
+include LICENSE.txt

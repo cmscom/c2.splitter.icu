@@ -1,0 +1,181 @@
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "c2.splitter.icu"
+version = "1.0.0.dev0"
+description = "A word splitter for Plone's ZCTextIndex based on ICU word boundaries"
+readme = "README.md"
+license = {text = "GPL version 2 or later"}
+requires-python = ">=3.10,<3.15"
+authors = [
+    { name = "Manabu TERADA", email = "terada@cmscom.jp" },
+]
+keywords = [
+    "Plone",
+    "ZCTextIndex",
+    "splitter",
+    "ICU",
+    "Japanese",
+    "search",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Plone",
+    "Framework :: Plone :: 6.0",
+    "Framework :: Plone :: 6.1",
+    "Framework :: Plone :: 6.2",
+    "Framework :: Plone :: Addon",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Operating System :: POSIX",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "plone.base",
+    # Also brings Products.ZCatalog, which contains ZCTextIndex. The
+    # Products.ZCTextIndex distribution on PyPI is an obsolete empty one.
+    "Products.CMFPlone",
+    # No wheels: building needs the ICU headers, pkg-config and a C++ compiler.
+    "PyICU>=2.16",
+]
+
+[project.optional-dependencies]
+test = [
+    "horse-with-no-namespace",
+    "plone.app.contenttypes",
+    "plone.app.testing",
+    "pytest",
+    "pytest-cov",
+    "pytest-plone>=0.5.0",
+]
+release = [
+    "zest.releaser[recommended]",
+    "zestreleaser.towncrier",
+    "zest.pocompile",
+]
+
+[project.urls]
+Homepage = "https://github.com/cmscom/c2.splitter.icu"
+PyPI = "https://pypi.org/project/c2.splitter.icu"
+Source = "https://github.com/cmscom/c2.splitter.icu"
+Tracker = "https://github.com/cmscom/c2.splitter.icu/issues"
+
+[project.entry-points."z3c.autoinclude.plugin"]
+target = "plone"
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
+
+[tool.towncrier]
+directory = "news/"
+filename = "CHANGELOG.md"
+start_string = "<!-- towncrier release notes start -->\n"
+title_format = "## {version} ({project_date})"
+template = "news/.changelog_template.jinja"
+issue_format = "[#{issue}](https://github.com/cmscom/c2.splitter.icu/issues/{issue})"
+underlines = ["", "", ""]
+
+[[tool.towncrier.type]]
+directory = "breaking"
+name = "Breaking changes:"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "New features:"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bug fixes:"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "internal"
+name = "Internal:"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "documentation"
+name = "Documentation:"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "tests"
+name = "Tests"
+showcontent = true
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+fix = true
+lint.select = [
+    # flake8-2020
+    "YTT",
+    # flake8-bandit
+    "S",
+    # flake8-bugbear
+    "B",
+    # flake8-builtins
+    "A",
+    # flake8-comprehensions
+    "C4",
+    # flake8-debugger
+    "T10",
+    # flake8-simplify
+    "SIM",
+    # mccabe
+    "C90",
+    # pycodestyle
+    "E", "W",
+    # pyflakes
+    "F",
+    # pygrep-hooks
+    "PGH",
+    # pyupgrade
+    "UP",
+    # ruff
+    "RUF",
+]
+lint.ignore = [
+    # DoNotAssignLambda
+    "E731",
+]
+
+[tool.ruff.lint.isort]
+case-sensitive = false
+no-sections = true
+force-single-line = true
+from-first = true
+lines-after-imports = 2
+lines-between-types = 1
+order-by-type = false
+
+[tool.ruff.format]
+preview = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501", "RUF001", "S101"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source_pkgs = ["c2.splitter.icu", "tests"]
+branch = true
+parallel = true
+
+[tool.zest-releaser]
+python-file-with-version = "src/c2/splitter/icu/__init__.py"
