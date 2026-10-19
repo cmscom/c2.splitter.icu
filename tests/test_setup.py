@@ -89,13 +89,13 @@ class TestEvaluation:
 
     def test_apply_twice_keeps_the_words(self, portal, catalog, setup_tool):
         setRoles(portal, TEST_USER_ID, ["Manager"])
-        portal.invokeFactory("Document", "doc", title="熊本大学の入試")
+        portal.invokeFactory("Document", "doc", title="電子カルテの導入")
         processQueue()
         words = catalog.icu_lexicon.length()
         assert words > 0
         setup_tool.runAllImportStepsFromProfile(EVALUATION)
         assert catalog.icu_lexicon.length() == words
-        assert len(catalog(SearchableText_icu="熊本 大学")) == 1
+        assert len(catalog(SearchableText_icu="電子 カルテ")) == 1
 
     def test_uninstall(self, catalog, setup_tool):
         setup_tool.runAllImportStepsFromProfile(EVALUATION_UNINSTALL)

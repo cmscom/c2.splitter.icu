@@ -19,9 +19,9 @@ EXPECTED_WORDS = {
         "76": ["私", "は", "猫", "が", "好き"],
     },
     # compound word and proper noun
-    "国立大学法人熊本大学": {
-        "74": ["国立大学", "法人", "熊本", "大学"],
-        "76": ["国立大学", "法人", "熊本", "大学"],
+    "大阪府立図書館": {
+        "74": ["大阪", "府立", "図書館"],
+        "76": ["大阪", "府立", "図書館"],
     },
     "東京都庁に行く": {
         "74": ["東京", "都庁", "に", "行く"],
@@ -154,7 +154,7 @@ def test_several_texts_are_joined_in_order(splitter):
 
 
 def test_words_are_str(splitter):
-    words = splitter.process(["abc 熊本"]) + splitter.processGlob(["abc*"])
+    words = splitter.process(["abc 図書館"]) + splitter.processGlob(["abc*"])
     assert {type(word) for word in words} == {str}
 
 

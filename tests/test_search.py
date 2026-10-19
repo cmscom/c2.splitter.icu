@@ -17,7 +17,7 @@ DOCUMENTS = {
     "tocho": "東京都庁の案内",
     "tokyo": "東京都の観光",
     "kyoto": "京都の寺",
-    "kumadai": "熊本大学の入試",
+    "karte": "電子カルテの導入",
     "python": "Python3.14 test notes",
 }
 
@@ -51,10 +51,10 @@ def test_munge_search_term_adds_a_wildcard():
         ("Python", {"python"}, {"python"}),
         # several Japanese words become a phrase
         ("東京都庁", {"tocho"}, {"tocho"}),
-        ("熊本大学", {"kumadai"}, {"kumadai"}),
-        ('"熊本大学の入試"', {"kumadai"}, {"kumadai"}),
+        ("電子カルテ", {"karte"}, {"karte"}),
+        ('"電子カルテの導入"', {"karte"}, {"karte"}),
         # two terms: Plone joins them with AND
-        ("熊本 入試", {"kumadai"}, {"kumadai"}),
+        ("電子 導入", {"karte"}, {"karte"}),
         # a match inside other words is gone
         ("京都", {"tocho", "tokyo", "kyoto"}, {"kyoto"}),
         # and so are wanted matches inside longer words
@@ -76,7 +76,7 @@ def test_plone_search(search, query, ngram, icu):
 @pytest.mark.parametrize(
     ("query", "found"),
     [
-        ("熊本 OR 観光", {"kumadai", "tokyo"}),
+        ("電子 OR 観光", {"karte", "tokyo"}),
         ("東京 AND NOT 観光", {"tocho"}),
         ("Pyth*", {"python"}),
         ("te?t", {"python"}),
@@ -107,6 +107,6 @@ def test_icu_lexicon_survives_a_commit(functional):
         assert lexicon._p_jar is connection
         assert type(lexicon._pipeline[0]) is ICUSplitter
         assert lexicon.parseTerms("東京都庁") == ["東京", "都庁"]
-        assert lexicon.termToWordIds("熊本") != [0]
+        assert lexicon.termToWordIds("電子") != [0]
     finally:
         connection.close()

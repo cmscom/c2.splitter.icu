@@ -79,9 +79,9 @@ class TestCompare:
 
     def test_at_most_20_rows(self, portal, compare):
         for number in range(25):
-            portal.invokeFactory("Document", f"doc{number}", title="熊本大学")
+            portal.invokeFactory("Document", f"doc{number}", title="電子カルテ")
         processQueue()
-        result = compare("熊本").results("SearchableText_icu")
+        result = compare("電子").results("SearchableText_icu")
         assert result["count"] == 25
         assert len(result["rows"]) == 20
 
