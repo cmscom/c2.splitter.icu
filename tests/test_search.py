@@ -23,6 +23,7 @@ DOCUMENTS = {
     "python": "Python3.14 test notes",
     "price": "10,000 yen",
     "domain": "example.com guide",
+    "short": "e.f notes",
 }
 
 
@@ -67,6 +68,7 @@ def test_munge_search_term_adds_a_wildcard():
         ("Python3.14", {"python"}, {"python"}),
         ("10,000", {"price"}, {"price"}),
         ("example.com", {"domain"}, {"domain"}),
+        ("e.f", {"short"}, {"short"}),
         ("14", {"python"}, set()),
         # neither finds it: the bigram index has "python3" and "14", the ICU
         # index has the one word "python3.14"
