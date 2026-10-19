@@ -1,0 +1,87 @@
+name: Plone package
+
+# Every action is pinned to a full commit SHA of a release that has been out
+# for at least two weeks (cooldown). The comment after each SHA is the tag.
+# The runner image is pinned because the ICU version comes with it
+# (ubuntu-24.04 has ICU 74) and the expected words depend on it.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Cancel superseded runs of the same PR only.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Install tox
+        run: python -m pip install tox
+      - name: Ruff
+        run: tox -e ruff-check
+
+  test:
+    runs-on: ubuntu-24.04
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {python-version: '3.10', tox-env: 'py310-Plone60'}
+          - {python-version: '3.11', tox-env: 'py311-Plone60'}
+          - {python-version: '3.12', tox-env: 'py312-Plone60'}
+          - {python-version: '3.13', tox-env: 'py313-Plone60'}
+          - {python-version: '3.10', tox-env: 'py310-Plone61'}
+          - {python-version: '3.11', tox-env: 'py311-Plone61'}
+          - {python-version: '3.12', tox-env: 'py312-Plone61'}
+          - {python-version: '3.13', tox-env: 'py313-Plone61'}
+          - {python-version: '3.10', tox-env: 'py310-Plone62'}
+          - {python-version: '3.11', tox-env: 'py311-Plone62'}
+          - {python-version: '3.12', tox-env: 'py312-Plone62'}
+          - {python-version: '3.13', tox-env: 'py313-Plone62'}
+          - {python-version: '3.14', tox-env: 'py314-Plone62'}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      # PyICU has no wheels; pip builds it against the system ICU.
+      - name: Install ICU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libicu-dev pkg-config g++
+      - name: Install tox
+        run: python -m pip install tox
+      - name: Test with tox
+        run: |
+          set -o pipefail
+          tox -e ${{ matrix.tox-env }} | tee tox.log
+      - name: Show the ICU and PyICU versions
+        run: |
+          versions=$(.tox/${{ matrix.tox-env }}/bin/python -c \
+            'import icu; print(f"ICU {icu.ICU_VERSION}, PyICU {icu.VERSION}")')
+          echo "$versions"
+          echo "${{ matrix.tox-env }}: $versions" >> "$GITHUB_STEP_SUMMARY"
+      - name: Check that no test was skipped
+        run: |
+          if grep -E '^SKIPPED|[0-9]+ skipped' tox.log; then
+            echo "::error::Some tests were skipped"
+            exit 1
+          fi
