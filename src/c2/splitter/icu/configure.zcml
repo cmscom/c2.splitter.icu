@@ -1,0 +1,53 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    i18n_domain="c2.splitter.icu"
+    >
+
+  <include package=".browser" />
+
+  <!-- Importing the package registers the splitter; the profile only marks
+       the add-on as installed and does not change the catalog. -->
+  <genericsetup:registerProfile
+      name="default"
+      title="c2.splitter.icu: Install"
+      description="Provide the ICU word splitter for ZCTextIndex lexicons."
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      directory="profiles/default"
+      />
+
+  <!-- Deactivating changes nothing either: remove the evaluation index with
+       the evaluation-uninstall profile. -->
+  <genericsetup:registerProfile
+      name="uninstall"
+      title="c2.splitter.icu: Uninstall"
+      description="Mark the add-on as not installed. The catalog is not changed."
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      directory="profiles/uninstall"
+      />
+
+  <genericsetup:registerProfile
+      name="evaluation"
+      title="c2.splitter.icu: Evaluation index"
+      description="Add icu_lexicon and SearchableText_icu to the catalog to compare them with SearchableText. Reindex SearchableText_icu afterwards."
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      directory="profiles/evaluation"
+      post_handler=".setuphandlers.add_evaluation_index"
+      />
+
+  <genericsetup:registerProfile
+      name="evaluation-uninstall"
+      title="c2.splitter.icu: Remove the evaluation index"
+      description="Remove SearchableText_icu and icu_lexicon from the catalog."
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      directory="profiles/evaluation-uninstall"
+      post_handler=".setuphandlers.remove_evaluation_index"
+      />
+
+  <!-- Hide the uninstall profiles -->
+  <utility
+      factory=".setuphandlers.HiddenProfiles"
+      name="c2.splitter.icu"
+      />
+
+</configure>

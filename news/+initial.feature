@@ -1,0 +1,1 @@
+Initial release: a ZCTextIndex word splitter that splits text at ICU word boundaries ("ICU word splitter"), an optional `c2.splitter.icu:evaluation` profile that adds `icu_lexicon` and `SearchableText_icu` next to `SearchableText`, and a `@@icu-compare` view for managers to compare both indexes. [terapyon]

@@ -1,0 +1,85 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      metal:use-macro="context/main_template/macros/master"
+>
+<body>
+<metal:main fill-slot="main">
+  <h1>Compare SearchableText and SearchableText_icu</h1>
+
+  <p tal:condition="not:view/icu_available">
+    SearchableText_icu does not exist. Apply the
+    <code>c2.splitter.icu:evaluation</code> profile in portal_setup and
+    reindex SearchableText_icu.
+  </p>
+
+  <form method="get"
+        tal:attributes="action string:${context/absolute_url}/@@icu-compare"
+  >
+    <label for="icu-compare-q">Search</label>
+    <input id="icu-compare-q"
+           name="q"
+           type="text"
+           tal:attributes="value view/query"
+    />
+    <button type="submit">Compare</button>
+  </form>
+
+  <tal:query tal:condition="view/query">
+    <p>Query after Plone's munge_search_term:
+      <code tal:content="view/munged">munged</code></p>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th></th>
+          <th tal:repeat="index view/indexes"
+              tal:content="index"
+          >index</th>
+        </tr>
+      </thead>
+      <tbody tal:define="terms view/search_terms;
+                         words view/index_words;">
+        <tr>
+          <th>Search terms (parseTerms)</th>
+          <td tal:repeat="index view/indexes">
+            <code tal:content="python:' | '.join(terms[index])">terms</code>
+          </td>
+        </tr>
+        <tr>
+          <th>Words of the query as text (process)</th>
+          <td tal:repeat="index view/indexes">
+            <code tal:content="python:' | '.join(words[index])">words</code>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Results</h2>
+    <div class="row">
+      <div class="col"
+           tal:repeat="index view/indexes"
+      >
+        <tal:result tal:define="result python:view.results(index)">
+          <h3><span tal:replace="index">index</span>:
+            <span tal:replace="result/count">0</span></h3>
+          <p class="text-danger"
+             tal:condition="result/error"
+             tal:content="result/error"
+          >error</p>
+          <ol>
+            <li tal:repeat="row result/rows">
+              <a tal:attributes="href row/url"
+                 tal:content="row/title"
+              >title</a>
+              <code tal:content="row/path">path</code>
+              <strong tal:condition="row/only_here">only here</strong>
+            </li>
+          </ol>
+        </tal:result>
+      </div>
+    </div>
+  </tal:query>
+</metal:main>
+</body>
+</html>
