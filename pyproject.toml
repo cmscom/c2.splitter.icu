@@ -217,6 +217,8 @@ module = [
     "Products.ZCTextIndex.PipelineFactory",
     "Products.ZCTextIndex.ZCTextIndex",
     "pytest_plone",
+    # Only on Python 3.10, for .github/scripts/release.py
+    "tomli",
     "transaction",
     "zExceptions",
     "zope.component",
