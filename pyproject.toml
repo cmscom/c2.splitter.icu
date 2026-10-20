@@ -49,11 +49,14 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "horse-with-no-namespace",
+    # packaging and tomli: .github/scripts/release.py, which a test imports
+    "packaging",
     "plone.app.contenttypes",
     "plone.app.testing",
     "pytest",
     "pytest-cov",
     "pytest-plone>=0.5.0",
+    "tomli; python_version < '3.11'",
 ]
 
 [dependency-groups]
