@@ -247,4 +247,5 @@ ignore = [
 ]
 
 [tool.zest-releaser]
-python-file-with-version = "src/c2/splitter/icu/__init__.py"
+# fullrelease makes the tag; the release workflow uploads to PyPI.
+release = false
