@@ -234,16 +234,12 @@ branch = true
 parallel = true
 
 [tool.check-manifest]
-# Files for development and CI only; the sdist has the package, the README,
-# the changelog and the licenses (see MANIFEST.in).
+# Files in git that are not in the sdist. The sdist has the package, the
+# README, the changelog and the licenses only; MANIFEST.in leaves out the
+# rest (tests/ with "prune"), and check-manifest ignores .github/ itself.
 ignore = [
     ".editorconfig",
-    ".github/**",
-    "constraints_*.txt",
     "news/**",
-    "requirements_*.txt",
-    "tests/**",
-    "tox.ini",
 ]
 
 [tool.zest-releaser]

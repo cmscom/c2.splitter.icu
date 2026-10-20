@@ -3,6 +3,7 @@ graft src/c2
 prune tests
 include *.md
 include pyproject.toml
+exclude AGENTS.md
 exclude tox.ini
 exclude *.txt
 global-exclude *.pyc
