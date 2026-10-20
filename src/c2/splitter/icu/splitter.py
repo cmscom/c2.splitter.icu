@@ -84,7 +84,8 @@ def split_glob(pattern: str, locale: str) -> list[str]:
     phrase and removes their wildcards with ``process_post_glob``.
     """
     letters = ""
-    wildcards = {}  # offset in ``letters`` -> the wildcards that stand there
+    # offset in ``letters`` -> the wildcards that stand there
+    wildcards: dict[int, str] = {}
     for char in pattern:
         if char in WILDCARDS:
             wildcards[len(letters)] = wildcards.get(len(letters), "") + char

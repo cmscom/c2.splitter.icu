@@ -40,7 +40,8 @@ def compare(portal: Any, http_request: Any) -> Callable[..., CompareView]:
     def compare(q: str | list[str] | None = None) -> CompareView:
         if q is not None:
             http_request.form["q"] = q
-        return portal.restrictedTraverse("@@icu-compare")
+        view: CompareView = portal.restrictedTraverse("@@icu-compare")
+        return view
 
     return compare
 

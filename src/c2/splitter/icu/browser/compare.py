@@ -31,11 +31,13 @@ class CompareView(BrowserView):
         if isinstance(query, list):
             # ?q=a&q=b
             query = query[0] if query else ""
-        return safe_text(query).strip()
+        text: str = safe_text(query)
+        return text.strip()
 
     @property
     def munged(self) -> str:
-        return munge_search_term(self.query)
+        munged: str = munge_search_term(self.query)
+        return munged
 
     @property
     def icu_available(self) -> bool:

@@ -37,6 +37,7 @@ Run the tests and the linters with tox:
 tox -e py314-Plone62      # one Python and Plone version
 tox -e ruff-check         # lint and format check
 tox -e ruff-fix           # fix and format
+tox -e mypy               # type check src and tests (builds PyICU)
 tox                       # the whole matrix
 ```
 
