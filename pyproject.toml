@@ -220,6 +220,7 @@ module = [
     "transaction",
     "zExceptions",
     "zope.component",
+    "zope.component.hooks",
     "zope.interface",
 ]
 ignore_missing_imports = true

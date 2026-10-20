@@ -1,6 +1,9 @@
 """Unit tests of ICUSplitter. They need PyICU, not a Plone site."""
 
 from c2.splitter.icu.splitter import ICUSplitter
+from c2.splitter.icu.splitter import locale_from_language
+from zope.component import getGlobalSiteManager
+from zope.component.hooks import setSite
 
 import icu
 import logging
@@ -103,6 +106,8 @@ def icu_major() -> str:
 
 @pytest.fixture
 def splitter() -> ICUSplitter:
+    # without a site the locale is ja
+    setSite(None)
     return ICUSplitter()
 
 
@@ -258,16 +263,83 @@ def test_nfkc_is_the_same_for_text_and_search_terms(splitter):
 
 def test_pickle_round_trip(splitter):
     # Our own object, as the ZODB stores it.
+    splitter.locale = "fi"
     restored = pickle.loads(pickle.dumps(splitter))  # noqa: S301
-    assert restored.process(["東京都庁に行く Python3.14"]) == splitter.process([
-        "東京都庁に行く Python3.14"
+    assert restored.locale == "fi"
+    assert restored.process(["東京都庁に行く Python3.14 a:b"]) == splitter.process([
+        "東京都庁に行く Python3.14 a:b"
     ])
 
 
-def test_instance_holds_no_icu_objects(splitter):
+def test_instance_holds_the_locale_and_no_icu_objects(splitter):
     splitter.process(["abc"])
-    assert vars(splitter) == {}
+    assert vars(splitter) == {"locale": "ja"}
     assert ICUSplitter.locale == "ja"
+
+
+def test_without_a_site_the_locale_is_ja():
+    setSite(None)
+    assert ICUSplitter().locale == "ja"
+
+
+class SiteWithoutRegistry:
+    def getSiteManager(self) -> object:
+        return getGlobalSiteManager()
+
+
+def test_site_without_a_registry_gives_ja():
+    setSite(SiteWithoutRegistry())
+    try:
+        assert ICUSplitter().locale == "ja"
+    finally:
+        setSite(None)
+
+
+def test_splitter_stored_without_a_locale_uses_ja():
+    # A splitter pickled before the locale was stored: no __init__ runs.
+    old = ICUSplitter.__new__(ICUSplitter)
+    assert vars(old) == {}
+    assert old.locale == "ja"
+    assert old.process(["a:b"]) == ["a", "b"]
+
+
+@pytest.mark.parametrize(
+    ("locale", "words", "globs"),
+    [
+        # ja and most locales cut at ":"; fi and sv keep it inside a word
+        ("ja", ["a", "b"], ["a", "b*"]),
+        ("fi", ["a:b"], ["a:b*"]),
+        ("sv", ["a:b"], ["a:b*"]),
+    ],
+)
+def test_the_locale_changes_the_words(splitter, locale, words, globs):
+    splitter.locale = locale
+    assert splitter.process(["a:b"]) == words
+    assert splitter.processGlob(["a:b*"]) == globs
+
+
+@pytest.mark.parametrize(
+    ("language", "locale"),
+    [
+        ("ja", "ja"),
+        ("en", "en"),
+        # Plone's combined language codes
+        ("en-us", "en_US"),
+        ("pt-br", "pt_BR"),
+        ("zh-tw", "zh_TW"),
+        ("fi", "fi"),
+        # nothing, or nothing ICU knows as a language: ja
+        ("", "ja"),
+        (None, "ja"),
+        (42, "ja"),
+        ("xx", "ja"),
+        ("!!!", "ja"),
+        ("123", "ja"),
+        ("toolonglanguage", "ja"),
+    ],
+)
+def test_locale_from_language(language, locale):
+    assert locale_from_language(language) == locale
 
 
 def test_registered_as_word_splitter():
