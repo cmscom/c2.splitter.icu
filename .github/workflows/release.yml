@@ -14,6 +14,12 @@ on:
 permissions:
   contents: read
 
+# Never cancel a release half way. The group must differ from the one in
+# plone-package.yml, which runs inside this workflow (group names ignore case).
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   test:
     # actionlint 1.7.12 does not know the self-repository syntax ($/...) yet.
