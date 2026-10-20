@@ -91,10 +91,12 @@ in `pyproject.toml`. The steps that need code are in
    enter the version (such as `1.0.0b2`: PEP 440 in its normalized form,
    without `v`) and run it.
 3. `prepare` stops unless the version is after the one in `pyproject.toml`,
-   has no tag yet, and the run is on `main`, with news fragments. Then it
-   writes the fragments into `CHANGELOG.md`, sets the version, commits
-   "Preparing release <version>" as github-actions[bot], makes the
-   annotated tag `<version>` and pushes both.
+   has no tag yet, is neither a development version nor both a pre-release
+   and a post-release (such as `1.0.0b2.post1`), and the run is on `main`,
+   with news fragments. Then it writes the fragments into `CHANGELOG.md`,
+   sets the version, commits "Preparing release <version>" as
+   github-actions[bot] and makes the annotated tag `<version>`.
+   `push-release` pushes both to GitHub.
 4. `test` runs the tests of `plone-package.yml` on that commit, and
    `build` builds and checks the sdist and the wheel.
 5. `publish` waits for a reviewer of the `pypi` environment. Review the
@@ -102,28 +104,46 @@ in `pyproject.toml`. The steps that need code are in
 6. `github-release` signs the files with Sigstore and makes a GitHub
    Release with the section of this version from `CHANGELOG.md`. Versions
    with `a`, `b` or `rc` are marked as pre-releases.
-7. `back-to-development` sets the next development version (`1.0.0b2`
-   gives `1.0.0b3.dev0`, `1.0.0` gives `1.0.1.dev0`), commits "Back to
-   development: <version>" and pushes it. If `main` has moved since the
-   release commit, it stops without pushing and says in its log how to do
-   it by hand.
+7. `development` sets the next development version (`1.0.0b2` gives
+   `1.0.0b3.dev0`, `1.0.0` gives `1.0.1.dev0`, `1.0.0.post1` gives
+   `1.0.0.post2.dev0`) and commits "Back to development: <version>".
+   `push-development` pushes it. If `main` has moved since the release
+   commit, it stops without pushing and says in its log how to do it by
+   hand.
 
-Only one release runs at a time.
+Only `push-release` and `push-development` can write to the repository.
+They run only `actions/checkout`, `actions/download-artifact` and `git`, and
+get the commits of the jobs before them as git bundles. Keep it so: do not
+add steps with other actions or tools to them.
+
+Only one release runs at a time. A run started while another release runs
+waits (GitHub keeps only the latest waiting run and cancels older ones),
+then starts from the `main` of the time it was started; its `push-release`
+fails because `main` has moved, and nothing is pushed. Run the workflow
+again.
 
 ### When a release fails or is rejected
 
-- Before `prepare` pushes, nothing has changed: fix the cause and run the
-  workflow again.
-- After `prepare` pushed, but before `publish` uploaded (the tests or the
+- Before `push-release` pushed, nothing has changed: fix the cause and run
+  the workflow again.
+- After `push-release` pushed, but before `publish` ran (the tests or the
   build failed, or the deployment was rejected): PyPI has nothing of this
   version. Delete the tag (`git push origin :refs/tags/<version>` and
   `git tag -d <version>`), revert "Preparing release <version>" on `main`
   (this brings the news fragments back) and push, fix the cause, and run
   the workflow again with the same version.
-- After `publish` uploaded: PyPI never accepts the same files again, so do
-  not delete the tag. If only `github-release` or `back-to-development`
-  failed, re-run the failed jobs, or do their step by hand. To fix the
-  release itself, release the next version.
+- If `publish` ran, look at <https://pypi.org/project/c2.splitter.icu/> for
+  the files of this version. If even one of them is there, do not delete
+  the tag: PyPI never accepts the same file again. Re-run `publish` to
+  upload the missing files (it skips the existing ones), then re-run the
+  jobs after it. To fix the release itself, release the next version.
+- If a re-run of `github-release` fails because the release already
+  exists, add the missing files to it with
+  `gh release upload <version> <files> --clobber` (the files and their
+  `.sigstore.json` from the run), or delete the GitHub Release and re-run
+  the job.
+- If `push-development` failed, re-run it, or set the development version
+  by hand as its log says.
 
 ### Settings needed once
 
@@ -132,7 +152,7 @@ Only one release runs at a time.
 - GitHub: the environment `pypi` with required reviewers. The workflow runs
   on the branch `main`, so a deployment rule of the environment must allow
   `main` (not only tags).
-- `prepare` and `back-to-development` push to `main` with `GITHUB_TOKEN`.
+- `push-release` and `push-development` push to `main` with `GITHUB_TOKEN`.
   If `main` gets a branch protection rule or a ruleset, it must let these
   pushes through (as an exception for GitHub Actions); otherwise the
   release stops at the push. Check this when you add the protection.
