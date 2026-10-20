@@ -233,5 +233,18 @@ source_pkgs = ["c2.splitter.icu", "tests"]
 branch = true
 parallel = true
 
+[tool.check-manifest]
+# Files for development and CI only; the sdist has the package, the README,
+# the changelog and the licenses (see MANIFEST.in).
+ignore = [
+    ".editorconfig",
+    ".github/**",
+    "constraints_*.txt",
+    "news/**",
+    "requirements_*.txt",
+    "tests/**",
+    "tox.ini",
+]
+
 [tool.zest-releaser]
 python-file-with-version = "src/c2/splitter/icu/__init__.py"
