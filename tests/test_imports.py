@@ -1,7 +1,8 @@
 def test_version():
     from c2.splitter.icu import __version__
+    from importlib.metadata import version
 
-    assert __version__ == "1.0.0.dev0"
+    assert __version__ == version("c2.splitter.icu")
 
 
 def test_c2_is_a_pep420_namespace():

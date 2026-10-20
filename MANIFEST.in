@@ -1,6 +1,9 @@
 graft src/c2
+# setuptools adds tests/test*.py by default, without conftest.py
+prune tests
 include *.md
 include pyproject.toml
+exclude AGENTS.md
 exclude tox.ini
 exclude *.txt
 global-exclude *.pyc

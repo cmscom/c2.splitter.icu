@@ -77,3 +77,39 @@ pointed at unpacked packages:
 
 tox passes `PKG_CONFIG_PATH`, `CC`, `CXX` and `CPPFLAGS` to the build by
 default.
+
+## Releasing
+
+Releases are made with zest.releaser on a maintainer's machine and published
+to PyPI by `.github/workflows/release.yml` with Trusted Publishing; no PyPI
+token is used. The version is kept only in `pyproject.toml`.
+
+1. Install the tools of the `release` extra in a virtual environment that
+   has pip (check-manifest builds the sdist in an isolated environment made
+   with pip):
+
+   ```shell
+   pip install "zest.releaser[recommended]" zestreleaser.towncrier zest.pocompile
+   ```
+
+   On an up-to-date `main` with a clean working tree, run `fullrelease`.
+   It runs check-manifest and pyroma, writes the news fragments into
+   `CHANGELOG.md`, sets the version, commits, makes the tag (such as
+   `1.0.0b1`, without `v`), sets the next development version and asks
+   whether to push. Answer yes: it runs `git push` and `git push --tags`.
+   It does not upload anything (`release = false`).
+2. The tag starts the Release workflow on GitHub Actions: the tests of
+   `plone-package.yml`, then the build (it stops if the tag is not the
+   version in `pyproject.toml`).
+3. The `publish` job waits for a reviewer of the `pypi` environment to
+   approve it, then uploads the sdist and the wheel to PyPI.
+4. The `github-release` job signs them with Sigstore and makes a GitHub
+   Release with the section of this version from `CHANGELOG.md` and the
+   files. Versions with `a`, `b` or `rc` are marked as pre-releases.
+
+Once, before the first release:
+
+- On PyPI, add a pending publisher (the project does not exist yet):
+  owner `cmscom`, repository `c2.splitter.icu`, workflow `release.yml`,
+  environment `pypi`. The first upload makes the project.
+- On GitHub, add the environment `pypi` with required reviewers.

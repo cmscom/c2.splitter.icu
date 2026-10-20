@@ -11,6 +11,8 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  # release.yml runs the tests before it builds.
+  workflow_call:
 
 permissions:
   contents: read
