@@ -55,11 +55,6 @@ test = [
     "pytest-cov",
     "pytest-plone>=0.5.0",
 ]
-release = [
-    "zest.releaser[recommended]",
-    "zestreleaser.towncrier",
-    "zest.pocompile",
-]
 
 [dependency-groups]
 dev = [
@@ -243,7 +238,3 @@ ignore = [
     ".editorconfig",
     "news/**",
 ]
-
-[tool.zest-releaser]
-# fullrelease makes the tag; the release workflow uploads to PyPI.
-release = false

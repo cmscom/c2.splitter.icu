@@ -80,36 +80,62 @@ default.
 
 ## Releasing
 
-Releases are made with zest.releaser on a maintainer's machine and published
-to PyPI by `.github/workflows/release.yml` with Trusted Publishing; no PyPI
-token is used. The version is kept only in `pyproject.toml`.
+Releases are made only by `.github/workflows/release.yml` on GitHub
+Actions; nothing is needed on a maintainer's machine. It publishes to PyPI
+with Trusted Publishing, so no PyPI token is used. The version is kept only
+in `pyproject.toml`. The steps that need code are in
+`.github/scripts/release.py`, tested by `tests/test_release_script.py`.
 
-1. Install the tools of the `release` extra in a virtual environment that
-   has pip (check-manifest builds the sdist in an isolated environment made
-   with pip):
+1. Make sure that `main` has the news fragments of the release in `news/`.
+2. In GitHub: **Actions**, **Release**, **Run workflow**, branch `main`,
+   enter the version (such as `1.0.0b2`: PEP 440 in its normalized form,
+   without `v`) and run it.
+3. `prepare` stops unless the version is after the one in `pyproject.toml`,
+   has no tag yet, and the run is on `main`, with news fragments. Then it
+   writes the fragments into `CHANGELOG.md`, sets the version, commits
+   "Preparing release <version>" as github-actions[bot], makes the
+   annotated tag `<version>` and pushes both.
+4. `test` runs the tests of `plone-package.yml` on that commit, and
+   `build` builds and checks the sdist and the wheel.
+5. `publish` waits for a reviewer of the `pypi` environment. Review the
+   deployment and approve it; it then uploads to PyPI.
+6. `github-release` signs the files with Sigstore and makes a GitHub
+   Release with the section of this version from `CHANGELOG.md`. Versions
+   with `a`, `b` or `rc` are marked as pre-releases.
+7. `back-to-development` sets the next development version (`1.0.0b2`
+   gives `1.0.0b3.dev0`, `1.0.0` gives `1.0.1.dev0`), commits "Back to
+   development: <version>" and pushes it. If `main` has moved since the
+   release commit, it stops without pushing and says in its log how to do
+   it by hand.
 
-   ```shell
-   pip install "zest.releaser[recommended]" zestreleaser.towncrier zest.pocompile
-   ```
+Only one release runs at a time.
 
-   On an up-to-date `main` with a clean working tree, run `fullrelease`.
-   It runs check-manifest and pyroma, writes the news fragments into
-   `CHANGELOG.md`, sets the version, commits, makes the tag (such as
-   `1.0.0b1`, without `v`), sets the next development version and asks
-   whether to push. Answer yes: it runs `git push` and `git push --tags`.
-   It does not upload anything (`release = false`).
-2. The tag starts the Release workflow on GitHub Actions: the tests of
-   `plone-package.yml`, then the build (it stops if the tag is not the
-   version in `pyproject.toml`).
-3. The `publish` job waits for a reviewer of the `pypi` environment to
-   approve it, then uploads the sdist and the wheel to PyPI.
-4. The `github-release` job signs them with Sigstore and makes a GitHub
-   Release with the section of this version from `CHANGELOG.md` and the
-   files. Versions with `a`, `b` or `rc` are marked as pre-releases.
+### When a release fails or is rejected
 
-Once, before the first release:
+- Before `prepare` pushes, nothing has changed: fix the cause and run the
+  workflow again.
+- After `prepare` pushed, but before `publish` uploaded (the tests or the
+  build failed, or the deployment was rejected): PyPI has nothing of this
+  version. Delete the tag (`git push origin :refs/tags/<version>` and
+  `git tag -d <version>`), revert "Preparing release <version>" on `main`
+  (this brings the news fragments back) and push, fix the cause, and run
+  the workflow again with the same version.
+- After `publish` uploaded: PyPI never accepts the same files again, so do
+  not delete the tag. If only `github-release` or `back-to-development`
+  failed, re-run the failed jobs, or do their step by hand. To fix the
+  release itself, release the next version.
 
-- On PyPI, add a pending publisher (the project does not exist yet):
-  owner `cmscom`, repository `c2.splitter.icu`, workflow `release.yml`,
-  environment `pypi`. The first upload makes the project.
-- On GitHub, add the environment `pypi` with required reviewers.
+### Settings needed once
+
+- PyPI: the trusted publisher of `c2.splitter.icu` is owner `cmscom`,
+  repository `c2.splitter.icu`, workflow `release.yml`, environment `pypi`.
+- GitHub: the environment `pypi` with required reviewers. The workflow runs
+  on the branch `main`, so a deployment rule of the environment must allow
+  `main` (not only tags).
+- `prepare` and `back-to-development` push to `main` with `GITHUB_TOKEN`.
+  If `main` gets a branch protection rule or a ruleset, it must let these
+  pushes through (as an exception for GitHub Actions); otherwise the
+  release stops at the push. Check this when you add the protection.
+  Commits pushed with `GITHUB_TOKEN` do not start other workflows, so
+  `plone-package.yml` does not run again for them; the release runs those
+  tests itself.
