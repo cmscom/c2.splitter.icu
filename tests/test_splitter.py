@@ -84,8 +84,8 @@ EXPECTED_GLOBS = {
 
 
 @pytest.fixture(scope="module")
-def icu_major():
-    major = icu.ICU_VERSION.split(".")[0]
+def icu_major() -> str:
+    major: str = icu.ICU_VERSION.split(".")[0]
     known = sorted({
         v
         for table in (EXPECTED_WORDS, EXPECTED_GLOBS)
@@ -102,7 +102,7 @@ def icu_major():
 
 
 @pytest.fixture
-def splitter():
+def splitter() -> ICUSplitter:
     return ICUSplitter()
 
 

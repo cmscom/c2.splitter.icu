@@ -10,6 +10,8 @@ from Products.CMFPlone.UnicodeSplitter.splitter import Splitter
 from zope.component import getUtility
 
 from types import SimpleNamespace
+from typing import Any
+from typing import NoReturn
 
 import logging
 import pytest
@@ -20,16 +22,16 @@ EVALUATION_UNINSTALL = "profile-c2.splitter.icu:evaluation-uninstall"
 
 
 @pytest.fixture
-def catalog(portal):
+def catalog(portal: Any) -> Any:
     return portal.portal_catalog
 
 
 @pytest.fixture
-def evaluation(setup_tool):
+def evaluation(setup_tool: Any) -> None:
     setup_tool.runAllImportStepsFromProfile(EVALUATION)
 
 
-def pipeline(lexicon):
+def pipeline(lexicon: Any) -> list[type]:
     return [type(element) for element in lexicon._pipeline]
 
 
@@ -125,7 +127,7 @@ class TestEvaluation:
     def test_uninstall_removes_the_index_before_the_lexicon(
         self, catalog, setup_tool, monkeypatch
     ):
-        def broken(*args, **kwargs):
+        def broken(*args: object, **kwargs: object) -> NoReturn:
             raise RuntimeError("broken")
 
         monkeypatch.setattr(type(aq_base(catalog)), "manage_delObjects", broken)

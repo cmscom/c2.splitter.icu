@@ -12,6 +12,8 @@ from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
 from Products.ZCTextIndex.ParseTree import ParseError
 from Products.ZCTextIndex.ParseTree import QueryError
+from Products.ZCTextIndex.ZCTextIndex import PLexicon
+from typing import Any
 
 
 NGRAM_INDEX = "SearchableText"
@@ -20,41 +22,43 @@ MAX_ROWS = 20
 
 class CompareView(BrowserView):
     @property
-    def catalog(self):
+    def catalog(self) -> Any:
         return getToolByName(self.context, "portal_catalog")
 
     @property
-    def query(self):
+    def query(self) -> str:
         query = self.request.form.get("q", "")
         if isinstance(query, list):
             # ?q=a&q=b
             query = query[0] if query else ""
-        return safe_text(query).strip()
+        text: str = safe_text(query)
+        return text.strip()
 
     @property
-    def munged(self):
-        return munge_search_term(self.query)
+    def munged(self) -> str:
+        munged: str = munge_search_term(self.query)
+        return munged
 
     @property
-    def icu_available(self):
+    def icu_available(self) -> bool:
         catalog = self.catalog
         return INDEX_ID in catalog.indexes() and LEXICON_ID in catalog.objectIds()
 
     @property
-    def indexes(self):
+    def indexes(self) -> list[str]:
         return [NGRAM_INDEX, INDEX_ID] if self.icu_available else [NGRAM_INDEX]
 
-    def _lexicon(self, index):
+    def _lexicon(self, index: str) -> PLexicon:
         return getattr(self.catalog, self.catalog.Indexes[index].lexicon_id)
 
-    def search_terms(self):
+    def search_terms(self) -> dict[str, list[str]]:
         """The words each lexicon looks up for the munged query."""
         munged = self.munged
         return {
             index: self._lexicon(index).parseTerms(munged) for index in self.indexes
         }
 
-    def index_words(self):
+    def index_words(self) -> dict[str, list[str]]:
         """The words each lexicon would store for the query as text."""
         words = {}
         for index in self.indexes:
@@ -64,13 +68,13 @@ class CompareView(BrowserView):
             words[index] = last
         return words
 
-    def _paths(self, index):
+    def _paths(self, index: str) -> list[str]:
         try:
             return [brain.getPath() for brain in self.catalog(**{index: self.munged})]
         except (ParseError, QueryError):
             return []
 
-    def results(self, index):
+    def results(self, index: str) -> dict[str, Any]:
         """Count, top rows and query error of ``index``."""
         try:
             brains = self.catalog(**{index: self.munged})

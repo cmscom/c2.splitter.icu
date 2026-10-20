@@ -6,6 +6,8 @@ PyICU is missing, the import fails; there is no fallback to another
 splitter.
 """
 
+from collections.abc import Iterable
+from collections.abc import Iterator
 from Products.ZCTextIndex.interfaces import ISplitter
 from Products.ZCTextIndex.PipelineFactory import element_factory
 from zope.interface import implementer
@@ -29,7 +31,7 @@ WORD_STATUS_MIN = icu.UWordBreak.NUMBER
 WORD_STATUS_LIMIT = icu.UWordBreak.IDEO_LIMIT
 
 
-def to_str(value):
+def to_str(value: str | bytes) -> str:
     """Return ``value`` as str. bytes are read as UTF-8.
 
     Invalid UTF-8 is replaced with U+FFFD and logged without the text, so
@@ -49,7 +51,7 @@ def to_str(value):
         return value.decode("utf-8", "replace")
 
 
-def _segments(text, locale):
+def _segments(text: str, locale: str) -> Iterator[tuple[str, bool]]:
     """Yield ``(segment, is_word)`` for the word break segments of ``text``.
 
     ICU positions are UTF-16 offsets, so the text is cut as an
@@ -65,12 +67,12 @@ def _segments(text, locale):
         start = end
 
 
-def split_words(text, locale):
+def split_words(text: str, locale: str) -> list[str]:
     """Return the words of ``text`` (already NFKC normalized)."""
     return [segment for segment, is_word in _segments(text, locale) if is_word]
 
 
-def split_glob(pattern, locale):
+def split_glob(pattern: str, locale: str) -> list[str]:
     """Split a search term and keep each wildcard on the word it belongs to.
 
     The wildcards are taken out, the rest is split like the text, and each
@@ -82,7 +84,8 @@ def split_glob(pattern, locale):
     phrase and removes their wildcards with ``process_post_glob``.
     """
     letters = ""
-    wildcards = {}  # offset in ``letters`` -> the wildcards that stand there
+    # offset in ``letters`` -> the wildcards that stand there
+    wildcards: dict[int, str] = {}
     for char in pattern:
         if char in WILDCARDS:
             wildcards[len(letters)] = wildcards.get(len(letters), "") + char
@@ -117,7 +120,7 @@ class ICUSplitter:
 
     locale = "ja"
 
-    def process(self, lst):
+    def process(self, lst: Iterable[str | bytes]) -> list[str]:
         """Split the texts to index; also used for search terms by default."""
         result = []
         for value in lst:
@@ -125,7 +128,7 @@ class ICUSplitter:
             result.extend(split_words(text, self.locale))
         return result
 
-    def processGlob(self, lst):
+    def processGlob(self, lst: Iterable[str | bytes]) -> list[str]:
         """Split search terms; ``*`` and ``?`` stay on their words."""
         result = []
         for value in lst:
@@ -133,7 +136,7 @@ class ICUSplitter:
             result.extend(split_glob(text, self.locale))
         return result
 
-    def process_post_glob(self, lst):
+    def process_post_glob(self, lst: Iterable[str | bytes]) -> list[str]:
         """Words of a phrase: remove the wildcards, but do not split again."""
         result = []
         for value in lst:

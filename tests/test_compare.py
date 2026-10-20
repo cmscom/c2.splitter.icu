@@ -2,12 +2,15 @@
 
 from AccessControl import Unauthorized
 from c2.splitter.icu.browser import compare as compare_module
+from c2.splitter.icu.browser.compare import CompareView
+from collections.abc import Callable
 from plone.app.testing import login
 from plone.app.testing import logout
 from plone.app.testing import setRoles
 from plone.app.testing import TEST_USER_ID
 from plone.app.testing import TEST_USER_NAME
 from Products.CMFCore.indexing import processQueue
+from typing import Any
 from zExceptions import NotFound
 
 import html
@@ -19,13 +22,13 @@ ERROR = "pattern '*ython' shouldn't start with glob character"
 
 
 @pytest.fixture
-def manager(portal):
+def manager(portal: Any) -> None:
     setRoles(portal, TEST_USER_ID, ["Manager"])
     login(portal, TEST_USER_NAME)
 
 
 @pytest.fixture
-def documents(portal, setup_tool, manager):
+def documents(portal: Any, setup_tool: Any, manager: None) -> None:
     setup_tool.runAllImportStepsFromProfile(EVALUATION)
     portal.invokeFactory("Document", "tocho", title="東京都庁の案内")
     portal.invokeFactory("Document", "kyoto", title="京都の寺")
@@ -33,11 +36,12 @@ def documents(portal, setup_tool, manager):
 
 
 @pytest.fixture
-def compare(portal, http_request):
-    def compare(q=None):
+def compare(portal: Any, http_request: Any) -> Callable[..., CompareView]:
+    def compare(q: str | list[str] | None = None) -> CompareView:
         if q is not None:
             http_request.form["q"] = q
-        return portal.restrictedTraverse("@@icu-compare")
+        view: CompareView = portal.restrictedTraverse("@@icu-compare")
+        return view
 
     return compare
 

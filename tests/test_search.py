@@ -2,12 +2,14 @@
 
 from c2.splitter.icu.compat import munge_search_term
 from c2.splitter.icu.splitter import ICUSplitter
+from collections.abc import Callable
 from plone.app.testing import setRoles
 from plone.app.testing import TEST_USER_ID
 from Products.CMFCore.indexing import processQueue
 from Products.ZCTextIndex.ParseTree import QueryError
 
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 import transaction
@@ -27,7 +29,7 @@ DOCUMENTS = {
 }
 
 
-def add_documents(portal):
+def add_documents(portal: Any) -> None:
     setRoles(portal, TEST_USER_ID, ["Manager"])
     for id_, title in DOCUMENTS.items():
         portal.invokeFactory("Document", id_, title=title)
@@ -35,12 +37,12 @@ def add_documents(portal):
 
 
 @pytest.fixture
-def search(portal, setup_tool):
+def search(portal: Any, setup_tool: Any) -> Callable[[str, str], set[str]]:
     setup_tool.runAllImportStepsFromProfile(EVALUATION)
     add_documents(portal)
     catalog = portal.portal_catalog
 
-    def search(index, query):
+    def search(index: str, query: str) -> set[str]:
         return {brain.getId for brain in catalog(**{index: query})}
 
     return search
@@ -137,7 +139,7 @@ def test_reindex_after_applying_the_profile(portal, setup_tool):
     assert {b.getId for b in catalog(SearchableText_icu="京都*")} == {"kyoto"}
 
 
-def replace_searchable_text(catalog, lexicon_id):
+def replace_searchable_text(catalog: Any, lexicon_id: str) -> None:
     """The code of the README: SearchableText with another lexicon."""
     catalog.delIndex("SearchableText")
     extra = SimpleNamespace(

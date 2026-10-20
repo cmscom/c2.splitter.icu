@@ -13,6 +13,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.ZCTextIndex.PipelineFactory import element_factory
 from Products.ZCTextIndex.ZCTextIndex import PLexicon
 from types import SimpleNamespace
+from typing import Any
 from zope.interface import implementer
 
 
@@ -29,7 +30,7 @@ PIPELINE = (
 
 @implementer(INonInstallable)
 class HiddenProfiles:
-    def getNonInstallableProfiles(self):
+    def getNonInstallableProfiles(self) -> list[str]:
         """Hide the uninstall profiles from site creation and the add-ons list."""
         return [
             "c2.splitter.icu:uninstall",
@@ -37,7 +38,7 @@ class HiddenProfiles:
         ]
 
 
-def add_evaluation_index(context):
+def add_evaluation_index(context: Any) -> None:
     """Add icu_lexicon and SearchableText_icu unless they exist.
 
     ``context`` is the setup tool. Nothing is indexed here; reindex
@@ -63,7 +64,7 @@ def add_evaluation_index(context):
     logger.info("%s added to portal_catalog; reindex it to fill it", INDEX_ID)
 
 
-def remove_evaluation_index(context):
+def remove_evaluation_index(context: Any) -> None:
     """Remove SearchableText_icu, then icu_lexicon.
 
     The index goes first, so that a failure never leaves an index without
