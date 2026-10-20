@@ -101,9 +101,10 @@ in `pyproject.toml`. The steps that need code are in
    `build` builds and checks the sdist and the wheel.
 5. `publish` waits for a reviewer of the `pypi` environment. Review the
    deployment and approve it; it then uploads to PyPI.
-6. `github-release` signs the files with Sigstore and makes a GitHub
-   Release with the section of this version from `CHANGELOG.md`. Versions
-   with `a`, `b` or `rc` are marked as pre-releases.
+6. `sign` signs the files with Sigstore, and `github-release` makes a
+   GitHub Release with them, their signatures and the section of this
+   version from `CHANGELOG.md`. Versions with `a`, `b` or `rc` are marked
+   as pre-releases.
 7. `development` sets the next development version (`1.0.0b2` gives
    `1.0.0b3.dev0`, `1.0.0` gives `1.0.1.dev0`, `1.0.0.post1` gives
    `1.0.0.post2.dev0`) and commits "Back to development: <version>".
@@ -111,10 +112,14 @@ in `pyproject.toml`. The steps that need code are in
    commit, it stops without pushing and says in its log how to do it by
    hand.
 
-Only `push-release` and `push-development` can write to the repository.
-They run only `actions/checkout`, `actions/download-artifact` and `git`, and
-get the commits of the jobs before them as git bundles. Keep it so: do not
-add steps with other actions or tools to them.
+Only `push-release`, `push-development` and `github-release` can write to
+the repository. They run only `actions/checkout`,
+`actions/download-artifact`, `git` and `gh`. The push jobs get the commits
+of the jobs before them as git bundles and push them only if each is one
+commit on the expected parent that changes only the expected files
+(`pyproject.toml`, `CHANGELOG.md` and removed news fragments for the
+release, `pyproject.toml` for the development version). Keep it so: do not
+add steps with other actions or tools to these jobs.
 
 Only one release runs at a time. A run started while another release runs
 waits (GitHub keeps only the latest waiting run and cancels older ones),
@@ -136,12 +141,14 @@ again.
   the files of this version. If even one of them is there, do not delete
   the tag: PyPI never accepts the same file again. Re-run `publish` to
   upload the missing files (it skips the existing ones), then re-run the
-  jobs after it. To fix the release itself, release the next version.
+  jobs after it. A re-run uses the files of the same run: before you go
+  on, check that the sha256 of each file that PyPI has already is the one
+  of the file in the `dist` artifact of the run. To fix the release itself, release the next version.
 - If a re-run of `github-release` fails because the release already
   exists, add the missing files to it with
-  `gh release upload <version> <files> --clobber` (the files and their
-  `.sigstore.json` from the run), or delete the GitHub Release and re-run
-  the job.
+  `gh release upload <version> <files> --clobber` (the files of the
+  `dist` artifact and their `.sigstore.json` of the `signatures` artifact
+  of the run), or delete the GitHub Release and re-run the job.
 - If `push-development` failed, re-run it, or set the development version
   by hand as its log says.
 
