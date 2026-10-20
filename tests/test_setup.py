@@ -73,6 +73,8 @@ def test_deactivate_keeps_the_evaluation_index(installer, catalog):
 class TestEvaluation:
     def test_lexicon_added(self, catalog):
         assert pipeline(catalog.icu_lexicon) == [ICUSplitter, I18NNormalizer]
+        # the test site's language is en
+        assert catalog.icu_lexicon._pipeline[0].locale == "en"
 
     def test_index_added(self, catalog):
         index = catalog.Indexes["SearchableText_icu"]
