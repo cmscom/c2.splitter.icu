@@ -76,6 +76,8 @@ def test_versions_after_the_current_one(version, current):
         ("1.0.0b3.dev0", "1.0.0b3.dev0 is a development version"),
         ("1.0.0b2+local", "1.0.0b2+local has a local part"),
         ("1!1.0.0", "1!1.0.0 has an epoch"),
+        ("1.0.0b2.post1", "1.0.0b2.post1 is both a pre-release and a post-release"),
+        ("1.0.0rc1.post2", "1.0.0rc1.post2 is both a pre-release and a post-release"),
     ],
 )
 def test_bad_versions(version, error):
@@ -153,6 +155,35 @@ def test_all_errors_at_once():
 )
 def test_next_development_version(version, expected):
     assert release.next_development_version(version) == expected
+
+
+def test_next_development_version_after_a_post_release():
+    # A post-release fixes a release, so the next one is another
+    # post-release, not the next release.
+    assert release.next_development_version("1.0.0.post1") == "1.0.0.post2.dev0"
+
+
+@pytest.mark.parametrize(
+    "version", ["1.0.0b2.post1", "1.0.0b3.dev0", "1.0.0+local", "1!1.0.0"]
+)
+def test_no_next_development_version(version):
+    with pytest.raises(ValueError, match="is not a version that can be released"):
+        release.next_development_version(version)
+
+
+@pytest.mark.parametrize(
+    ("version", "expected"),
+    [
+        ("1.0.0a1", True),
+        ("1.0.0b2", True),
+        ("1.0.0rc1", True),
+        ("1.0.0", False),
+        ("1.0.0.post1", False),
+        ("2", False),
+    ],
+)
+def test_is_prerelease(version, expected):
+    assert release.is_prerelease(version) is expected
 
 
 PYPROJECT = """\

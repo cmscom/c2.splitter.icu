@@ -9,6 +9,8 @@
     release.py back-to-development VERSION
         Set the version in pyproject.toml to the development version after
         VERSION (the way zest.releaser does) and print it.
+    release.py prerelease VERSION
+        Print "true" if VERSION is a pre-release (a, b or rc), else "false".
 
 The functions do not read files or run git, so that the tests can call them.
 Needs the packaging distribution.
@@ -76,6 +78,10 @@ def _version_errors(version: str) -> list[str]:
         return [f"{version} has a local part"]
     if parsed.epoch:
         return [f"{version} has an epoch"]
+    if parsed.pre is not None and parsed.post is not None:
+        # Such versions (a fix of a pre-release) are not needed here and are
+        # easy to get wrong, so they are not made.
+        return [f"{version} is both a pre-release and a post-release"]
     return []
 
 
@@ -89,11 +95,12 @@ def _is_fragment(name: str, types: list[str]) -> bool:
 def next_development_version(version: str) -> str:
     """The development version after version, as zest.releaser makes it.
 
-    1.0.0b1 gives 1.0.0b2.dev0, 1.0.0 gives 1.0.1.dev0.
+    1.0.0b1 gives 1.0.0b2.dev0, 1.0.0 gives 1.0.1.dev0, 1.0.0.post1 gives
+    1.0.0.post2.dev0.
     """
+    if _version_errors(version):
+        raise ValueError(f"{version} is not a version that can be released")
     parsed = Version(version)
-    if parsed.is_devrelease or parsed.local is not None or parsed.epoch:
-        raise ValueError(f"{version} is not a release version")
     release = ".".join(str(part) for part in parsed.release)
     if parsed.pre is not None:
         letter, number = parsed.pre
@@ -103,6 +110,11 @@ def next_development_version(version: str) -> str:
     parts = list(parsed.release)
     parts[-1] += 1
     return ".".join(str(part) for part in parts) + ".dev0"
+
+
+def is_prerelease(version: str) -> bool:
+    """Whether version is a pre-release (a, b or rc) for the GitHub Release."""
+    return Version(version).is_prerelease
 
 
 def set_version(text: str, version: str) -> str:
@@ -170,7 +182,8 @@ def _check(version: str) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
-        "command", choices=["check", "set-version", "back-to-development"]
+        "command",
+        choices=["check", "set-version", "back-to-development", "prerelease"],
     )
     parser.add_argument("version")
     args = parser.parse_args(argv)
@@ -178,6 +191,9 @@ def main(argv: list[str] | None = None) -> int:
         return _check(args.version)
     if args.command == "set-version":
         _write_version(args.version)
+        return 0
+    if args.command == "prerelease":
+        print("true" if is_prerelease(args.version) else "false")
         return 0
     current = _project_version()
     if current != args.version:
