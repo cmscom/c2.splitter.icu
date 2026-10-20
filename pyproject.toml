@@ -124,6 +124,8 @@ fix = true
 lint.select = [
     # flake8-2020
     "YTT",
+    # flake8-annotations
+    "ANN",
     # flake8-bandit
     "S",
     # flake8-bugbear
@@ -152,6 +154,8 @@ lint.select = [
 lint.ignore = [
     # DoNotAssignLambda
     "E731",
+    # Any is used for Zope and Plone objects that have no type
+    "ANN401",
 ]
 
 [tool.ruff.lint.isort]
@@ -167,7 +171,9 @@ order-by-type = false
 preview = true
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["E501", "RUF001", "S101"]
+# Fixtures and helpers in tests have types; the test functions and their
+# fixture arguments need not.
+"tests/*" = ["ANN001", "ANN201", "E501", "RUF001", "S101"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
