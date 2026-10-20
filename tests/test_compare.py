@@ -122,6 +122,27 @@ class TestCompare:
         assert "Results" not in html
 
 
+def test_locale_of_the_icu_lexicon(portal, setup_tool, manager, compare):
+    portal.portal_registry["plone.default_language"] = "fi"
+    setup_tool.runAllImportStepsFromProfile(EVALUATION)
+    portal.portal_registry["plone.default_language"] = "ja"
+    view = compare("京都")
+    assert view.icu_locale == "fi"
+    html = " ".join(view().split())
+    assert "Locale of the ICU word splitter in icu_lexicon: <code>fi</code>" in html
+
+
+def test_locale_of_an_icu_lexicon_without_the_icu_splitter(
+    portal, setup_tool, manager, compare
+):
+    setup_tool.runAllImportStepsFromProfile(EVALUATION)
+    catalog = portal.portal_catalog
+    catalog.icu_lexicon._pipeline = catalog.plone_lexicon._pipeline
+    view = compare("京都")
+    assert view.icu_locale is None
+    assert "Locale of the ICU word splitter" not in view()
+
+
 def test_without_evaluation_index(compare, manager):
     view = compare("京都")
     assert view.icu_available is False

@@ -8,8 +8,10 @@ splitter.
 
 from collections.abc import Iterable
 from collections.abc import Iterator
+from Products.CMFCore.utils import getToolByName
 from Products.ZCTextIndex.interfaces import ISplitter
 from Products.ZCTextIndex.PipelineFactory import element_factory
+from zope.component.hooks import getSite
 from zope.interface import implementer
 
 import contextlib
@@ -24,11 +26,41 @@ SPLITTER_NAME = "ICU word splitter"
 
 WILDCARDS = "*?"
 
+DEFAULT_LOCALE = "ja"
+LANGUAGE_RECORD = "plone.default_language"
+ISO_LANGUAGES = frozenset(icu.Locale.getISOLanguages())
+
 # Rule statuses of the word break iterator: NONE (0-99) is spaces,
 # punctuation, symbols and emoji. ICU only promises a status inside these
 # ranges, so they are compared as ranges.
 WORD_STATUS_MIN = icu.UWordBreak.NUMBER
 WORD_STATUS_LIMIT = icu.UWordBreak.IDEO_LIMIT
+
+
+def locale_from_language(language: object) -> str:
+    """Return the ICU locale for a Plone language code, or ``ja``.
+
+    ICU reads Plone's combined codes: ``en-us`` gives ``en_US``. Anything
+    that is not a str, or whose language ICU does not know, gives ``ja``.
+    """
+    if not isinstance(language, str) or not language:
+        return DEFAULT_LOCALE
+    locale = icu.Locale(language)
+    if locale.getLanguage() not in ISO_LANGUAGES:
+        return DEFAULT_LOCALE
+    name: str = locale.getName()
+    return name
+
+
+def site_locale() -> str:
+    """Return the ICU locale for the language of the current Plone site."""
+    site = getSite()
+    if site is None:
+        return DEFAULT_LOCALE
+    registry = getToolByName(site, "portal_registry", None)
+    if registry is None:
+        return DEFAULT_LOCALE
+    return locale_from_language(registry.get(LANGUAGE_RECORD))
 
 
 def to_str(value: str | bytes) -> str:
@@ -116,9 +148,17 @@ class ICUSplitter:
 
     Instances are stored in the ZODB as part of a lexicon, so they hold no
     ICU object; the break iterator is made for every call.
+
+    The locale is the site language when the splitter is made, that is when
+    its lexicon is made, and does not change afterwards: the words in the
+    index and the words of a search must come from the same rules. A
+    splitter stored before it had a locale uses the class attribute.
     """
 
-    locale = "ja"
+    locale = DEFAULT_LOCALE
+
+    def __init__(self) -> None:
+        self.locale = site_locale()
 
     def process(self, lst: Iterable[str | bytes]) -> list[str]:
         """Split the texts to index; also used for search terms by default."""

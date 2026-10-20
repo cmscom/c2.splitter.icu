@@ -70,9 +70,24 @@ because `都` and `都庁` are different words, and `14` does not find
 `Python3.14`. Evaluate with the words your users search for before you
 switch.
 
-The locale is `ja`. ICU uses its dictionary for Chinese and Japanese text
-with any locale, so other locales would not change these words; text in
-other scripts is split by ICU's rules as well.
+### Locale
+
+The splitter takes its ICU locale from the language of the Plone site
+(`plone.default_language`) when it is made, that is when its lexicon is
+made, for example by the evaluation profile. Plone's codes such as `en-us`
+become ICU locales such as `en_US`. Without a site, or with a language that
+ICU does not know, the locale is `ja`.
+
+The locale stays with the lexicon: changing the site language later does
+not change it, so that the words in the index and the words of a search are
+split by the same rules. `@@icu-compare` shows the locale of `icu_lexicon`.
+To use another locale, make the lexicon again (for example: apply
+`c2.splitter.icu:evaluation-uninstall`, change the site language, apply
+`c2.splitter.icu:evaluation`) and reindex the indexes that use it.
+
+ICU uses its dictionary for Chinese and Japanese text with any locale, so
+the locale does not change those words. It changes a few rules for other
+text: with `fi` or `sv`, `a:b` is one word, with `ja` or `en` it is two.
 
 Text is processed as `str`. `bytes` are read as UTF-8; invalid UTF-8 is
 replaced with U+FFFD and logged as a warning (with the length and the

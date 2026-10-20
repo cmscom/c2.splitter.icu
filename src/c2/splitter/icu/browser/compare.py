@@ -7,6 +7,7 @@ catalog. It is in English and not translated.
 from c2.splitter.icu.compat import munge_search_term
 from c2.splitter.icu.setuphandlers import INDEX_ID
 from c2.splitter.icu.setuphandlers import LEXICON_ID
+from c2.splitter.icu.splitter import ICUSplitter
 from plone.base.utils import safe_text
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
@@ -47,6 +48,16 @@ class CompareView(BrowserView):
     @property
     def indexes(self) -> list[str]:
         return [NGRAM_INDEX, INDEX_ID] if self.icu_available else [NGRAM_INDEX]
+
+    @property
+    def icu_locale(self) -> str | None:
+        """The locale of the ICU word splitter in icu_lexicon."""
+        if not self.icu_available:
+            return None
+        for element in getattr(self.catalog, LEXICON_ID)._pipeline:
+            if isinstance(element, ICUSplitter):
+                return element.locale
+        return None
 
     def _lexicon(self, index: str) -> PLexicon:
         return getattr(self.catalog, self.catalog.Indexes[index].lexicon_id)

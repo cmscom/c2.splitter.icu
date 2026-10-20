@@ -13,6 +13,11 @@
     reindex SearchableText_icu.
   </p>
 
+  <p tal:condition="view/icu_locale">
+    Locale of the ICU word splitter in icu_lexicon:
+    <code tal:content="view/icu_locale">ja</code>
+  </p>
+
   <form method="get"
         tal:attributes="action string:${context/absolute_url}/@@icu-compare"
   >
