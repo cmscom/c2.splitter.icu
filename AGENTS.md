@@ -127,6 +127,9 @@ then starts from the `main` of the time it was started; its `push-release`
 fails because `main` has moved, and nothing is pushed. Run the workflow
 again.
 
+The `setup-uv` steps pin uv with `version` and `checksum`. When you change
+the version, change the checksum with it.
+
 ### When a release fails or is rejected
 
 - Before `push-release` pushed, nothing has changed: fix the cause and run

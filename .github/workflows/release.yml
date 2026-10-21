@@ -62,6 +62,10 @@ jobs:
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: '0.13.4'
+          # The sha256 of uv-x86_64-unknown-linux-gnu.tar.gz of that version, in
+          # hex without "sha256:" (setup-uv v10.0.1 knows none for 0.13.4). All
+          # the jobs run on ubuntu-24.04, which is x86_64. Change it with the version.
+          checksum: '2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f'
           enable-cache: false
       - name: Check the version
         env:
@@ -171,6 +175,10 @@ jobs:
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: '0.13.4'
+          # The sha256 of uv-x86_64-unknown-linux-gnu.tar.gz of that version, in
+          # hex without "sha256:" (setup-uv v10.0.1 knows none for 0.13.4). All
+          # the jobs run on ubuntu-24.04, which is x86_64. Change it with the version.
+          checksum: '2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f'
           enable-cache: false
       - name: Check that the tag is the version in pyproject.toml
         env:
@@ -329,6 +337,10 @@ jobs:
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: '0.13.4'
+          # The sha256 of uv-x86_64-unknown-linux-gnu.tar.gz of that version, in
+          # hex without "sha256:" (setup-uv v10.0.1 knows none for 0.13.4). All
+          # the jobs run on ubuntu-24.04, which is x86_64. Change it with the version.
+          checksum: '2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f'
           enable-cache: false
       - name: Set the development version
         id: next
